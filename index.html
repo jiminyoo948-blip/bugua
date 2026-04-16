@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>即刻卜卦</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{--g:#b8903a;--gb:rgba(184,144,58,0.1);--gbd:rgba(184,144,58,0.25);--tx:#ede3cf;--mt:#64748b;--dm:#374151;--card:rgba(255,255,255,0.04);}
+html,body{background:#07070f;color:var(--tx);font-family:'Noto Serif SC',STSong,serif;min-height:100vh;overflow-x:hidden;}
+textarea,input,select{font-family:inherit;}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input[type=number]{-moz-appearance:textfield;}
+textarea{resize:none;}
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 20% 20%,#160d22 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,#0a1715 0%,transparent 55%),#07070f;}
+.star{position:fixed;border-radius:50%;background:#c8a84b;animation:tw 3s ease-in-out infinite alternate;}
+@keyframes tw{from{opacity:.03}to{opacity:.38}}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.wrap{position:relative;z-index:1;max-width:440px;margin:0 auto;padding:0 0 80px;}
+.header{padding:16px 18px 12px;border-bottom:1px solid var(--gbd);}
+.flex-sb{display:flex;justify-content:space-between;align-items:center;}
+.clock-sub{font-size:10px;color:var(--g);letter-spacing:3px;margin-bottom:3px;}
+.clock-date{font-size:19px;font-weight:700;letter-spacing:2px;}
+.clock-time{font-size:15px;color:var(--g);letter-spacing:4px;font-variant-numeric:tabular-nums;}
+.sbtn{padding:5px 12px;background:var(--gb);border:1px solid var(--gbd);color:var(--g);border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;letter-spacing:1px;}
+.tz-panel{margin-top:9px;display:none;align-items:center;gap:9px;}
+.main{padding:20px 18px;}
+.title-area{text-align:center;margin-bottom:22px;}
+.app-name{font-size:28px;font-weight:900;letter-spacing:6px;color:var(--tx);}
+.app-sub{font-size:10px;color:var(--mt);letter-spacing:4px;margin-top:5px;}
+.slbl{font-size:9px;color:var(--g);letter-spacing:3px;margin-bottom:8px;}
+textarea.q-input{width:100%;padding:12px 14px;background:var(--gb);border:1px solid var(--gbd);border-radius:10px;color:var(--tx);font-size:14px;line-height:1.75;outline:none;transition:border-color .2s;margin-bottom:7px;}
+textarea.q-input:focus{border-color:rgba(184,144,58,0.55);}
+.ewx-tag{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:12px;animation:fadeup .25s ease;}
+.no-ewx{font-size:10px;color:var(--dm);margin-bottom:12px;padding-left:2px;}
+
+/* 事发时间 */
+.et-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0;}
+.tog-btn{padding:5px 13px;border-radius:20px;border:1px solid var(--gbd);background:var(--gb);color:var(--mt);font-size:11px;cursor:pointer;font-family:inherit;letter-spacing:1px;transition:all .2s;}
+.tog-btn.on{background:rgba(184,144,58,0.18);border-color:var(--g);color:var(--g);}
+.sx-btn{padding:5px 8px;border-radius:6px;border:1px solid var(--gbd);background:var(--gb);color:var(--mt);font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.sx-btn.on{background:rgba(184,144,58,0.22);border-color:var(--g);color:var(--g);}
+.et-box{padding:13px 14px;background:var(--gb);border:1px solid var(--gbd);border-radius:9px;margin-top:9px;margin-bottom:14px;}
+.et-hint{font-size:10px;color:var(--mt);margin-bottom:10px;}
+.date-row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:7px;margin-bottom:10px;}
+.time-row{display:grid;grid-template-columns:1fr 20px 1fr 1.8fr;align-items:end;gap:7px;}
+.lbl9{font-size:9px;color:var(--g);margin-bottom:3px;}
+.hi{width:100%;padding:8px;background:rgba(0,0,0,0.2);border:1px solid var(--gbd);border-radius:7px;color:var(--tx);font-size:16px;text-align:center;font-family:inherit;outline:none;}
+.hi::placeholder{color:var(--dm);font-size:13px;}
+.hi:focus{border-color:rgba(184,144,58,0.5);}
+.sep{font-size:16px;color:var(--gbd);padding-bottom:5px;text-align:center;}
+
+/* 按钮 */
+.cast-btn{width:100%;padding:16px 0;border:none;border-radius:13px;background:linear-gradient(135deg,#b8903a,#7a5c1a);color:#fff;font-size:20px;font-weight:700;letter-spacing:8px;cursor:pointer;font-family:inherit;margin-top:16px;box-shadow:0 0 28px rgba(184,144,58,0.2);}
+.cast-btn:disabled{background:rgba(255,255,255,0.04);border:1px solid var(--gbd);color:var(--dm);cursor:not-allowed;box-shadow:none;}
+
+/* 结果 */
+.result-wrap{padding:18px 18px;animation:fadeup .3s ease;}
+.back-btn{background:transparent;border:none;color:var(--mt);font-size:12px;cursor:pointer;padding:0;margin-bottom:14px;letter-spacing:1px;font-family:inherit;}
+.q-card{padding:11px 14px;background:var(--card);border:1px solid var(--gbd);border-radius:10px;margin-bottom:12px;}
+.result-center{text-align:center;padding:20px 14px;background:var(--card);border-radius:14px;margin-bottom:13px;}
+.big-v{font-size:52px;font-weight:900;line-height:1;}
+.rt{font-size:9px;color:var(--g);letter-spacing:3px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--gbd);}
+.ai-box{padding:14px 15px;background:var(--gb);border:1px solid var(--gbd);border-radius:10px;font-size:13px;line-height:2;margin-bottom:13px;min-height:64px;}
+.wxrel-card{padding:10px 13px;background:var(--card);border:1px solid var(--gbd);border-radius:9px;margin-bottom:12px;}
+.wxrel-row{display:flex;align-items:center;gap:12px;}
+.wxrel-em{text-align:center;font-size:11px;color:var(--mt);}
+.wxrel-em big{display:block;font-size:22px;line-height:1.3;}
+.reasons{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.r-row{display:flex;gap:7px;font-size:11px;color:var(--mt);line-height:1.7;}
+.r-dot{color:var(--g);flex-shrink:0;}
+.gong-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px;}
+.gong-cell{padding:10px 5px;text-align:center;background:var(--card);border-radius:9px;}
+.gong-nm{font-size:17px;font-weight:700;margin:3px 0;}
+.gong-sh{font-size:9px;color:var(--mt);line-height:1.4;}
+.gong-lb{font-size:9px;color:var(--dm);}
+.gold-l{padding:9px 13px;margin-bottom:12px;background:rgba(255,255,255,0.015);border-left:2px solid rgba(184,144,58,0.55);border-radius:0 7px 7px 0;font-size:12px;color:#cbd5e1;line-height:1.85;}
+.mh-wrap{padding:13px;background:var(--card);border:1px solid var(--gbd);border-radius:11px;margin-bottom:8px;}
+.mh-row{display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:10px;}
+.mh-cell{text-align:center;}
+.mh-box{width:42px;height:42px;border-radius:9px;background:var(--gb);border:1px solid var(--gbd);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--g);font-weight:700;margin:0 auto 3px;}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.cmp-cell{padding:11px;text-align:center;background:var(--card);border-radius:9px;}
+.hint-box{padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:7px;font-size:11px;color:var(--mt);line-height:1.8;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div id="star-root"></div>
+
+<div class="wrap">
+  <div class="header">
+    <div class="flex-sb">
+      <div>
+        <div class="clock-sub" id="clk-sub">UTC+8 · 子时</div>
+        <div class="clock-date" id="clk-date">—</div>
+        <div class="clock-time" id="clk-time">--:--:--</div>
+      </div>
+      <button class="sbtn" onclick="toggleTz()">时区</button>
+    </div>
+    <div class="tz-panel" id="tz-panel">
+      <span style="font-size:10px;color:var(--mt)">UTC+</span>
+      <input type="number" id="tz-in" value="8" min="-12" max="14" class="hi" style="width:52px;font-size:14px;">
+      <span style="font-size:10px;color:var(--dm)">北京=+8</span>
+    </div>
+  </div>
+
+  <!-- 主页 -->
+  <div id="page-main" class="main">
+    <div class="title-area">
+      <div class="app-name">即刻卜卦</div>
+      <div class="app-sub">仅供参考</div>
+    </div>
+
+    <div class="slbl">描述所问之事</div>
+    <textarea class="q-input" id="q-in" rows="4"
+      placeholder="写下你想问的事&#10;&#10;例：明天下午5点逃课，会被点名吗？&#10;例：这周五想向暗恋的人表白，能成吗？&#10;例：后天面试，能顺利通过吗？"
+      oninput="onQ(this.value)"></textarea>
+    <div id="ewx-area"></div>
+
+    <div class="et-row" style="margin-top:2px;">
+      <div class="slbl" style="margin-bottom:0;">事件发生时间（选填）</div>
+      <button class="tog-btn" id="et-tog" onclick="toggleET()">＋ 填写</button>
+    </div>
+    <div id="et-box" class="et-box" style="display:none;">
+      <div class="et-hint">填写这件事计划发生的具体时间（可以是明天、后天）</div>
+      <div class="date-row">
+        <div>
+          <div class="lbl9">年</div>
+          <input type="number" id="ev-y" class="hi" placeholder="如2025" style="font-size:13px;">
+        </div>
+        <div>
+          <div class="lbl9">月</div>
+          <input type="number" id="ev-mo" min="1" max="12" class="hi">
+        </div>
+        <div>
+          <div class="lbl9">日</div>
+          <input type="number" id="ev-d" min="1" max="31" class="hi">
+        </div>
+      </div>
+      <div class="time-row">
+        <div>
+          <div class="lbl9">时</div>
+          <input type="number" id="ev-h" value="17" min="0" max="23" class="hi" oninput="updEvSC()">
+        </div>
+        <div class="sep">:</div>
+        <div>
+          <div class="lbl9">分</div>
+          <input type="number" id="ev-m" value="0" min="0" max="59" class="hi">
+        </div>
+        <div id="ev-sc" style="padding-bottom:5px;font-size:13px;color:var(--g);font-weight:700;"></div>
+      </div>
+    </div>
+
+    <!-- 个人信息（选填，用于个性化卦象） -->
+    <div class="et-row" style="margin-top:14px;">
+      <div class="slbl" style="margin-bottom:0;">个人信息（选填）</div>
+      <button class="tog-btn" id="extra-tog" onclick="toggleExtra()">＋ 填写</button>
+    </div>
+    <div id="extra-box" class="et-box" style="display:none;">
+      <div class="et-hint">填写后卦象将融入你的生命信息，令结果因人而异</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div class="lbl9">出生年份</div>
+          <input type="number" id="ex-year" min="1920" max="2025" class="hi" placeholder="如1998" style="font-size:15px;" oninput="updBirthHint()">
+        </div>
+        <div id="birth-hint-box" style="display:flex;align-items:flex-end;padding-bottom:6px;">
+          <div id="birth-hint" style="font-size:11px;color:var(--g);line-height:1.6;"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="cast-btn" id="cast-btn" onclick="doBugua()" disabled>✦ 卜　卦 ✦</button>
+    <div id="cast-hint" style="font-size:10px;color:var(--dm);text-align:center;margin-top:7px;min-height:16px;"></div>
+  </div>
+
+  <!-- 结果页 -->
+  <div id="page-result" style="display:none;" class="result-wrap"></div>
+</div>
+
+<script>
+// ═══ 基础数据 ═══
+const TG=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const DZ=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+const WX_OF={甲:"木",乙:"木",丙:"火",丁:"火",戊:"土",己:"土",庚:"金",辛:"金",壬:"水",癸:"水",子:"水",丑:"土",寅:"木",卯:"木",辰:"土",巳:"火",午:"火",未:"土",申:"金",酉:"金",戌:"土",亥:"水"};
+const SHENG={木:"火",火:"土",土:"金",金:"水",水:"木"};
+const KE={木:"土",火:"金",土:"水",金:"木",水:"火"};
+const WXC={火:"#fbbf24",木:"#4ade80",水:"#60a5fa",金:"#94a3b8",土:"#d97706"};
+const WXN={火:"🔥",木:"🌿",水:"💧",金:"⚔️",土:"🪨"};
+const p2=n=>String(n).padStart(2,"0");
+const getSC=h=>Math.floor(((h+1)%24)/2);
+
+// ═══ 节气算法 ═══
+function toJD(y,m,d,h=12){if(m<=2){y--;m+=12;}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+h/24+B-1524.5;}
+function sunLon(jd){const T=(jd-2451545)/36525,L0=280.46646+36000.76983*T,M=(357.52911+35999.05029*T)*Math.PI/180,C=(1.914602-0.004817*T)*Math.sin(M)+(0.019993-0.000101*T)*Math.sin(2*M)+0.000289*Math.sin(3*M);let l=(L0+C)%360;return l<0?l+360:l;}
+const TD=[285,300,315,330,345,0,15,30,45,60,75,90,105,120,135,150,165,180,195,210,225,240,255,270];
+const TM=[1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12];
+const TDAY=[6,20,4,19,6,21,5,20,6,21,6,21,7,23,7,23,8,23,8,23,7,22,7,22];
+function findTerm(yr,idx){const tg=TD[idx];let jd=toJD(yr,TM[idx],TDAY[idx],12),lo=jd-25,hi=jd+25;for(let i=0;i<60;i++){const mid=(lo+hi)/2;let d=sunLon(mid)-tg;if(d>180)d-=360;if(d<-180)d+=360;if(Math.abs(d)<0.00005)break;if(d>0)hi=mid;else lo=mid;}return(lo+hi)/2;}
+
+// ═══ 小六壬 ═══
+const LRG=["大安","留连","速喜","赤口","小吉","空亡"];
+const LR={
+  大安:{luck:"大吉",color:"#4ade80",short:"平稳安宁，静守百事宜",detail:"大安主静，宜守不宜动。求财问病出行皆吉，官司和缓，可放心行事。"},
+  留连:{luck:"凶",color:"#f87171",short:"拖延停滞，事情缠绕",detail:"留连主迟，凡事拖延难成。问病缠绵，出行不利，官司久拖，求财难得。"},
+  速喜:{luck:"吉",color:"#fbbf24",short:"喜信将至，进展迅速",detail:"速喜主动，凡事快速有成。音信速至，出行顺利，婚姻喜庆，求财可得。"},
+  赤口:{luck:"凶",color:"#f87171",short:"口舌是非，争执纷扰",detail:"赤口主争，易生口舌纷争。官司不利，出行有阻，需防小人中伤，宜谨言慎行。"},
+  小吉:{luck:"小吉",color:"#34d399",short:"小有吉庆，逐渐向好",detail:"小吉主和，事虽未大成但有进展。求财小得，婚事可成，出行平安。"},
+  空亡:{luck:"平",color:"#94a3b8",short:"落空无着，谋事难成",detail:"空亡主虚，所谋之事多落空。宜反思而非行动，静待转机。"}
+};
+
+// ═══ 核心起卦引擎（三才合一：天时+人意+随缘）═══
+// 总数 = 农历月 + 农历日 + 时辰序 + 分钟 + 秒 + 字符熵 + 瞬时随机数
+// 三宫递进：月宫 → 日宫 → 时宫（加入全部变量后取模6）
+function buildSeed(m, d, h, min, sec, charEntropy, rand){
+  const sc = getSC(h);
+  // 传统基数：月+日+时辰
+  const base = m + d + sc;
+  // 流转之气：分钟+秒（同一时辰内不同时刻各异）
+  const flow = min + sec;
+  // 人意之数：字符编码总和（同一时刻不同问题各异）
+  // 外应之数：1-100随机整数（模拟摇卦瞬间）
+  return { base, flow, charEntropy, rand, sc };
+}
+
+function calcLR(m, d, h, min, sec, charEntropy, rand){
+  const { base, flow, sc } = buildSeed(m, d, h, min, sec, charEntropy, rand);
+  const total = base + flow + charEntropy + rand;
+  // 传统修正：减3（三才天地人修正）
+  const adj = n => ((n - 3 + 6000) % 6);
+  // 月宫：纯以月起（天时之基）
+  const g0 = LRG[adj(m)];
+  // 日宫：月+日+流转之气（天时+地利）
+  const g1 = LRG[adj(m + d + flow)];
+  // 时宫：全数合参（天时+地利+人和）
+  const g2 = LRG[adj(total)];
+  return [g0, g1, g2];
+}
+
+// 起卦用问卦时间；事发时间可以是未来的年月日时
+// 事发宫位用事发的月日时（可以是未来）
+function evGongFn(em,ed,eh){
+  return LRG[((em-1+ed-1+getSC(eh))%6+6)%6];
+}
+
+// ═══ 梅花易数 ═══
+const BG=[{n:"乾",nat:"天",wx:"金"},{n:"坤",nat:"地",wx:"土"},{n:"震",nat:"雷",wx:"木"},{n:"巽",nat:"风",wx:"木"},{n:"坎",nat:"水",wx:"水"},{n:"离",nat:"火",wx:"火"},{n:"艮",nat:"山",wx:"土"},{n:"兑",nat:"泽",wx:"金"}];
+const G64=["乾为天","坤为地","水雷屯","山水蒙","水天需","天水讼","地水师","水地比","风天小畜","天泽履","地天泰","天地否","天火同人","火天大有","地山谦","雷地豫","泽雷随","山风蛊","地泽临","风地观","火雷噬嗑","山火贲","山地剥","地雷复","天雷无妄","山天大畜","山雷颐","泽风大过","坎为水","离为火","泽山咸","雷风恒","天山遁","雷天大壮","火地晋","地火明夷","风火家人","火泽睽","水山蹇","雷水解","山泽损","风雷益","泽天夬","天风姤","泽地萃","地风升","泽水困","水风井","泽火革","火风鼎","震为雷","艮为山","风山渐","雷泽归妹","雷火丰","火山旅","巽为风","兑为泽","风水涣","水泽节","风泽中孚","雷山小过","水火既济","火水未济"];
+const GM={"乾为天":"纯阳刚健，自强不息，宜主动出击，诸事可成。","坤为地":"柔顺厚载，宜顺势而为，积蓄实力，徐图进展。","水雷屯":"初创艰难，根基未稳，宜耐心经营，持之以恒。","坎为水":"险中有节，重重困难，需坚持信念，守正待时。","离为火":"文明光明，事业有成，保持冷静，持续耕耘。","泽山咸":"感应相通，感情顺利，婚缘可成，合作亦佳。","雷风恒":"恒久持续，坚守正道，长久稳健，坚持必有收获。","水火既济":"诸事已成，功德圆满，当前顺利，防骄保泰。","火水未济":"事尚未竟，需再努力，前途光明，坚持必成。","天地否":"天地不交，闭塞不通，需忍辱负重，等待时机。","地天泰":"天地交泰，吉祥如意，诸事顺遂，可大展宏图。","雷地豫":"顺势而行，事半功倍，喜庆将至。","天火同人":"与人同心，合作顺利，广结善缘，众志成城。","火天大有":"大有所获，事业鼎盛，财运亨通，光明磊落。","地山谦":"谦虚谨慎，以谦自持，终必有成。","泽雷随":"随时而动，顺势应变，机不可失。","山水蒙":"童蒙求学，需虚心请教，循序渐进。","风水涣":"涣散离析，凝聚人心，方可转危为安。","水泽节":"节制有度，凡事适可而止，节制则吉。","雷山小过":"小事可为，大事需谨，守中为要。","风泽中孚":"诚信为本，内心光明，感化他人。","山风蛊":"积弊已久，需革除旧习，重整振作。","泽地萃":"众志成城，聚合力量，共图大事。","地风升":"循序上升，积累渐进，终可成就。"};
+function calcMH(m, d, h, min, sec, charEntropy, rand){
+  const sc = getSC(h);
+  // 上卦种子：月+日+分钟+字符熵（人意为主）
+  const upperSeed = m + d + min + charEntropy + rand;
+  // 下卦种子：加入秒+时辰（天时为辅）
+  const lowerSeed = upperSeed + sec + sc;
+  const ui = upperSeed % 8;
+  const li = lowerSeed % 8;
+  // 动爻：全数之和取模6，以随机数保证每次不同
+  const change = ((m + d + sc + min + sec + charEntropy + rand) % 6) + 1;
+  const gn = G64[ui*8+li] || "变卦";
+  return { upper:BG[ui], lower:BG[li], change, guaName:gn,
+           guaMeaning:GM[gn]||"随机应变，把握当下变化，顺势而行。" };
+}
+
+// ═══ 事件五行识别（Gemini 智能分析）═══
+const GEMINI_KEY = "AIzaSyBqB5ivbHZ-suW8pM1aHmImqNv1POu7iK8";
+
+const WX_META = {
+  木:{label:"木性",desc:"生发·求进·开始·成长"},
+  火:{label:"火性",desc:"主动·热烈·竞争·彰显"},
+  土:{label:"土性",desc:"稳守·信诺·持续·固本"},
+  金:{label:"金性",desc:"财务·评判·收割·决断"},
+  水:{label:"水性",desc:"隐匿·流动·暗藏·夜行"},
+};
+
+// 关键词兜底（网络失败时使用）
+const EWX_FB=[
+  {wx:"火",re:/表白|告白|求婚|演出|比赛|竞争|升职|创业|追求|挑战/},
+  {wx:"木",re:/考试|升学|求职|面试|出行|申请|入学|保研|读书|开始|出发/},
+  {wx:"土",re:/稳定|婚姻|房子|合同|签约|结婚|续约|长久/},
+  {wx:"金",re:/钱|财|收入|投资|买|卖|谈判|官司|成绩|奖金|交易/},
+  {wx:"水",re:/逃|躲|隐瞒|秘密|偷偷|晚上|背后|暗中|私下|作弊|旷课|逃课|下雨|天气|雨/},
+];
+function fallbackEWX(q){
+  if(!q)return null;
+  for(const e of EWX_FB)if(e.re.test(q)){const m=WX_META[e.wx];return{wx:e.wx,...m,reason:"关键词匹配"};}
+  return null;
+}
+
+async function analyzeEventWX(q){
+  const prompt = `你是中国传统命理专家，分析这件事的五行属性，只返回JSON不要其他文字。
+规则：木=生长求进学业出行新事物；火=主动热烈竞争情感；土=稳守婚姻固定信诺；金=财务决断评判肃杀；水=隐匿流动夜行自然水天气降水。
+事件：「${q}」
+格式：{"wx":"木","yin":false,"reason":"原因不超10字"}`;
+  const url="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+GEMINI_KEY;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),5000);
+  try{
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:80}}),
+      signal:controller.signal});
+    clearTimeout(timer);
+    if(!r.ok)throw new Error("http_err");
+    const data=await r.json();
+    const raw=data.candidates?.[0]?.content?.parts?.[0]?.text||"";
+    const match=raw.match(/\{[^}]+\}/);
+    if(!match)throw new Error("no_json");
+    const parsed=JSON.parse(match[0]);
+    if(!WX_META[parsed.wx])throw new Error("bad_wx");
+    return{wx:parsed.wx,...WX_META[parsed.wx],yin:parsed.yin||false,reason:parsed.reason||""};
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+// ═══ 五行生克关系描述（修正版：真正动态计算）═══
+function wxRelDesc(wx1, wx2){
+  // wx1 是上卦五行，wx2 是事件五行
+  // 返回 {score, desc, color}
+  if(SHENG[wx1]===wx2) return {score:1, desc:"上卦"+wx1+"生事件"+wx2+"，卦气滋养，外部顺应，偏吉", color:"#4ade80"};
+  if(KE[wx1]===wx2)    return {score:-1,desc:"上卦"+wx1+"克事件"+wx2+"，卦气压制，阻力较大，偏凶", color:"#f87171"};
+  if(SHENG[wx2]===wx1) return {score:1, desc:"事件"+wx2+"生上卦"+wx1+"，事件借势卦气，相辅相成，偏吉", color:"#4ade80"};
+  if(KE[wx2]===wx1)    return {score:-1,desc:"事件"+wx2+"克上卦"+wx1+"，事件与卦气相悖，内外不和，偏凶", color:"#f87171"};
+  return {score:0, desc:"事件"+wx2+"与卦气"+wx1+"比和，力量均衡，结果中正", color:"#94a3b8"};
+}
+
+// ═══ 综合判断 ═══
+function judgeAll(lr,mh,ewx,extra){
+  const lu=LR[lr[2]];
+  let score=0,reasons=[];
+
+  // 1. 小六壬时宫
+  if(lu.luck==="大吉"){score+=2;reasons.push("时宫「"+lr[2]+"」大吉，当下时机顺畅");}
+  else if(lu.luck==="吉"||lu.luck==="小吉"){score+=1;reasons.push("时宫「"+lr[2]+"」"+lu.luck+"，时机偏利");}
+  else if(lu.luck==="凶"){score-=2;reasons.push("时宫「"+lr[2]+"」凶，当下时机不利");}
+  else reasons.push("时宫「"+lr[2]+"」平，时机中性");
+
+  // 2. 上下卦五行
+  if(mh.upper.wx===mh.lower.wx){score+=1;reasons.push("上下卦同为"+mh.upper.wx+"行，卦气纯正，力量集中");}
+
+  // 3. 事件五行与上卦生克（动态计算，不硬编码）
+  let ewxResult=null;
+  if(ewx){
+    ewxResult=wxRelDesc(mh.upper.wx, ewx.wx);
+    score+=ewxResult.score;
+    reasons.push("事件属"+ewx.label+"（"+ewx.desc+"）："+ewxResult.desc);
+  }
+
+  // 生肖/出生年份加成（生肖由出生年份自动推导）
+  let extraHint="";
+  if(extra&&extra.shengxiao){
+    const sxWX=WX_OF[extra.shengxiao]||"土";
+    const uw=mh.upper.wx;
+    if(SHENG[sxWX]===uw){score+=1;extraHint="本命"+extra.shengxiaoName+"（"+sxWX+"）生上卦"+uw+"，命主与卦气相合，吉力增强";}
+    else if(KE[sxWX]===uw){score-=1;extraHint="本命"+extra.shengxiaoName+"（"+sxWX+"）克上卦"+uw+"，命主与卦气相悖，需谨慎";}
+    else if(KE[uw]===sxWX){score-=1;extraHint="上卦"+uw+"克本命"+extra.shengxiaoName+"（"+sxWX+"），外力压制，凶意加重";}
+    else if(SHENG[uw]===sxWX){score+=1;extraHint="上卦"+uw+"生本命"+extra.shengxiaoName+"（"+sxWX+"），卦气助命，顺势则吉";}
+    else extraHint="本命"+extra.shengxiaoName+"（"+sxWX+"）与卦气"+uw+"比和，平稳";
+    reasons.push(extraHint);
+    if(extra.isMinMing){score-=1;reasons.push("今年为本命年（"+extra.shengxiao+"年），诸事宜守不宜进");}
+  }
+  const LV=[{min:3,t:"大吉",c:"#4ade80"},{min:1,t:"小吉",c:"#a3e635"},{min:0,t:"平",c:"#94a3b8"},{min:-1,t:"小凶",c:"#fb923c"},{min:-99,t:"大凶",c:"#f87171"}];
+  return{overall:LV.find(l=>score>=l.min)||LV[4],reasons,ewxResult,ewx,extra,extraHint,score};
+}
+
+// ═══ 本地断语引擎 ═══
+// 完全基于卦象、时辰阴阳、五行生克，不依赖任何外部 API
+
+// 时辰阴阳属性
+const SC_YY = {
+  子:"阳",丑:"阴",寅:"阳",卯:"阴",辰:"阳",巳:"阴",
+  午:"阳",未:"阴",申:"阳",酉:"阴",戌:"阳",亥:"阴"
+};
+
+// 六壬宫口吻模板
+const LR_DUANYU = {
+  大安:{
+    开头:["此卦大安临时，气象平和，"],
+    mid:["静中有福，"],
+    凶转:["然动则生变，"],
+  },
+  速喜:{
+    开头:["速喜当值，喜气来临，"],
+    mid:["事机已动，"],
+    凶转:["然急则生乱，"],
+  },
+  留连:{
+    开头:["留连主迟，气场滞涩，"],
+    mid:["事情多有缠绕，"],
+    凶转:["强行则愈陷，"],
+  },
+  赤口:{
+    开头:["赤口临宫，是非之气弥漫，"],
+    mid:["口舌易起，"],
+    凶转:["需防小人暗中生事，"],
+  },
+  小吉:{
+    开头:["小吉应时，机缘渐聚，"],
+    mid:["事虽未大成，"],
+    凶转:["然切勿过于急进，"],
+  },
+  空亡:{
+    开头:["空亡当头，气机落虚，"],
+    mid:["所谋恐难落实，"],
+    凶转:["此时行事如履薄冰，"],
+  },
+};
+
+// 卦象核心意象
+const GUA_XIANG = {
+  "乾为天":"天行健，气势宏大",
+  "坤为地":"地道柔顺，厚积而薄发",
+  "水雷屯":"草木初萌，破土艰难",
+  "坎为水":"水行险地，需以信守节",
+  "离为火":"火明丽附，光而不实则危",
+  "泽山咸":"山泽感应，情动于中",
+  "雷风恒":"雷风相薄，持正方久",
+  "水火既济":"水火既济，功成在此",
+  "火水未济":"未济之象，事犹未竟",
+  "天地否":"否塞不通，小人道长",
+  "地天泰":"泰运临门，天地交和",
+  "雷地豫":"豫乐顺时，先备则无患",
+  "天火同人":"同人于野，志同则成",
+  "火天大有":"大有之卦，盛极须防",
+  "地山谦":"谦卦柔中，谦者受益",
+  "泽雷随":"随时应变，顺则无咎",
+  "山水蒙":"蒙昧初启，需明师引导",
+  "风水涣":"涣散之时，凝神聚力为要",
+  "水泽节":"节而有度，过犹不及",
+  "雷山小过":"小过之象，小事可为大事须慎",
+  "风泽中孚":"中孚诚信，以诚感物",
+};
+
+// 五行生克断语
+function wxDanyu(uw, evwx) {
+  if (!evwx) return "";
+  if (SHENG[uw] === evwx) return "上卦"+uw+"生养"+evwx+"性之事，卦气顺应，外力相助，";
+  if (KE[uw] === evwx)    return "上卦"+uw+"克制"+evwx+"性之事，环境施压，阻碍重重，";
+  if (SHENG[evwx] === uw) return evwx+"性之事反滋上卦"+uw+"，彼此相益，气场相合，";
+  if (KE[evwx] === uw)    return evwx+"性之事与上卦"+uw+"相克，内外相悖，需化解矛盾，";
+  return evwx+"性之事与卦气"+uw+"比和，力量均衡，";
+}
+
+// 趋吉避凶建议
+function getAdvice(overall, lrGong, ewx, scName, scYY) {
+  const isFire = ewx && ewx.wx === "火";
+  const isWater = ewx && ewx.wx === "水";
+  const isWood = ewx && ewx.wx === "木";
+  const isMetal = ewx && ewx.wx === "金";
+  const isEarth = ewx && ewx.wx === "土";
+
+  if (overall === "大吉" || overall === "小吉") {
+    if (isFire)  return "宜趁"+scYY+"气行事，主动出击，时不我待，大胆推进。";
+    if (isWater) return "行事宜低调，借"+scName+"时阴柔之力，悄然而动，切勿声张。";
+    if (isWood)  return "宜循序渐进，"+scName+"时木气生发，稳步向前，必有收获。";
+    if (isMetal) return "宜果断决策，"+scName+"时金气锐利，一击而中，拖延反误。";
+    if (isEarth) return "宜稳守待机，"+scName+"时土气敦厚，守正持续，终有所成。";
+    return "宜顺势而动，"+scName+"时"+scYY+"气旺，把握当下，从容行事。";
+  } else if (overall === "平") {
+    if (isWater) return "事虽难料，行事宜谨慎低调，避开风头，静候时机转变。";
+    return "事势中正，可小步试探，不宜大举推进，静观其变为上。";
+  } else {
+    if (lrGong === "留连") return "此时强行推进，徒增缠绕。宜暂停等待，待时机转换再行。";
+    if (lrGong === "赤口") return "需防言语冲突与小人中伤，沉默为金，忍一时风平浪静。";
+    if (lrGong === "空亡") return "此卦落虚，所谋恐难落实。宜重新审视方向，另寻良机。";
+    if (isWater) return "水性隐匿之事，此时阻碍重重，强行则败露，宜另择时日。";
+    return "卦象不利，宜收手观望，待气场转顺，再徐图进展。";
+  }
+}
+
+function genReading({q, evInfo, lr, mh, jd, at, extra}) {
+  const lrGong = lr[2];
+  const lu = LR[lrGong];
+  const scYY = SC_YY[at.sc] || "阳";
+  const tmpl = LR_DUANYU[lrGong];
+
+  // 第一句：时宫 + 起卦时辰阴阳
+  const s1 = tmpl.开头[0] + at.sc + "时" + scYY + "气" + (scYY==="阳"?"旺盛":"内敛") + "，";
+
+  // 第二句：卦象意象
+  const guaXiang = GUA_XIANG[mh.guaName] || (mh.guaName + "变化之象");
+  const s2 = "所得" + mh.guaName + "，" + guaXiang + "，第" + mh.change + "爻动而" + (jd.score > 0 ? "吉象显现" : jd.score < 0 ? "凶机潜伏" : "机势待判") + "。";
+
+  // 第三句：五行生克
+  const evwx = jd.ewx ? jd.ewx.wx : null;
+  const s3wx = wxDanyu(mh.upper.wx, evwx);
+  const s3 = s3wx ? s3wx + (jd.score > 0 ? "此事顺应天时。" : jd.score < 0 ? "此事逆势而行。" : "吉凶参半。") : "";
+
+  // 第四句：事发时宫对比（如有）
+  let s4 = "";
+  if (evInfo) {
+    const eli = LR[evInfo.gong];
+    if (evInfo.gong === lrGong) {
+      s4 = "事发" + evInfo.scName + "时与起卦同宫「" + lrGong + "」，征兆一致，结果更为确定。";
+    } else {
+      const bothGood = lu.luck !== "凶" && eli.luck !== "凶";
+      const bothBad  = lu.luck === "凶" && eli.luck === "凶";
+      s4 = "事发" + evInfo.scName + "时落「" + evInfo.gong + "」（" + eli.luck + "），"
+        + (bothGood ? "两时皆吉，事成可期。" : bothBad ? "两时皆凶，此事不宜强行。" : "一吉一凶，需审时度势，慎重行事。");
+    }
+  }
+
+  // 第四点五句：本命加成
+  let s4b = "";
+  if(extra&&extra.shengxiaoName&&jd.extraHint) s4b = jd.extraHint + "。";
+
+  // 第五句：趋吉避凶建议
+  const s5 = getAdvice(jd.overall.t, lrGong, jd.ewx, at.sc, scYY);
+
+  return [s1, s2, s3, s4, s4b, s5].filter(Boolean).join("").replace(/，。/g,"。");
+}
+
+// ═══ UI 状态 ═══
+let etOn=false, tzVis=false, curEwx=null, extraOn=false;
+
+// 生肖数据（用于自动推导，不需要手动选择）
+const SX_LIST=[
+  {name:"鼠",dz:"子",em:"🐭"},{name:"牛",dz:"丑",em:"🐮"},{name:"虎",dz:"寅",em:"🐯"},
+  {name:"兔",dz:"卯",em:"🐰"},{name:"龙",dz:"辰",em:"🐲"},{name:"蛇",dz:"巳",em:"🐍"},
+  {name:"马",dz:"午",em:"🐴"},{name:"羊",dz:"未",em:"🐑"},{name:"猴",dz:"申",em:"🐵"},
+  {name:"鸡",dz:"酉",em:"🐔"},{name:"狗",dz:"戌",em:"🐶"},{name:"猪",dz:"亥",em:"🐷"},
+];
+
+function toggleExtra(){
+  extraOn=!extraOn;
+  document.getElementById('extra-box').style.display=extraOn?'block':'none';
+  const btn=document.getElementById('extra-tog');
+  btn.textContent=extraOn?'✦ 已填写':'＋ 填写';
+  btn.className='tog-btn'+(extraOn?' on':'');
+}
+
+function updBirthHint(){
+  const yr=parseInt(document.getElementById('ex-year').value)||0;
+  const hint=document.getElementById('birth-hint');
+  if(!hint)return;
+  if(yr>=1900&&yr<=2025){
+    const sxDZ=DZ[((yr-4)%12+12)%12];
+    const sxObj=SX_LIST.find(s=>s.dz===sxDZ)||{name:"未知",em:""};
+    hint.innerHTML=sxObj.em+' 属'+sxObj.name+'<br><span style="color:var(--dm);">'+sxDZ+'年命</span>';
+  }else{
+    hint.innerHTML='';
+  }
+}
+
+function toggleTz(){tzVis=!tzVis;document.getElementById('tz-panel').style.display=tzVis?'flex':'none';}
+
+function toggleET(){
+  etOn=!etOn;
+  document.getElementById('et-box').style.display=etOn?'block':'none';
+  const btn=document.getElementById('et-tog');
+  btn.textContent=etOn?'✦ 已设定':'＋ 填写';
+  btn.className='tog-btn'+(etOn?' on':'');
+  if(etOn){
+    // 默认填入明天
+    const tzV=parseInt(document.getElementById('tz-in').value)||8;
+    const now=new Date(),lt=new Date(now.getTime()+(tzV+now.getTimezoneOffset()/60)*3600000);
+    const tomorrow=new Date(lt.getTime()+86400000);
+    document.getElementById('ev-y').value=tomorrow.getFullYear();
+    document.getElementById('ev-mo').value=tomorrow.getMonth()+1;
+    document.getElementById('ev-d').value=tomorrow.getDate();
+    updEvSC();
+  }
+}
+
+function updEvSC(){
+  const h=parseInt(document.getElementById('ev-h').value)||0;
+  const m=parseInt(document.getElementById('ev-m').value)||0;
+  document.getElementById('ev-sc').textContent=DZ[getSC(h)]+'时 '+p2(h)+':'+p2(m);
+}
+
+function onQ(val){
+  curEwx=null;
+  const area=document.getElementById('ewx-area');
+  document.getElementById('cast-btn').disabled=!val.trim();
+  if(val.trim()){
+    const fb=fallbackEWX(val);
+    if(fb){
+      const c=WXC[fb.wx];
+      area.innerHTML='<div class="ewx-tag" style="background:'+c+'12;border-color:'+c+'38;">'
+        +'<span style="font-size:18px;flex-shrink:0;">'+WXN[fb.wx]+'</span>'
+        +'<div><div style="font-size:12px;font-weight:700;color:'+c+';">'+fb.label+'</div>'
+        +'<div style="font-size:10px;color:var(--mt);">'+fb.desc+' · 卜卦时将精确分析</div></div>'
+        +'</div>';
+    } else {
+      area.innerHTML='<div style="font-size:10px;color:var(--g);margin-bottom:12px;padding-left:2px;">✦ 卜卦时将通过 AI 分析事件五行属性</div>';
+    }
+    document.getElementById('cast-hint').textContent='将结合事件五行与当下卦气推衍';
+  } else {
+    area.innerHTML='';
+    document.getElementById('cast-hint').textContent='';
+  }
+}
+
+
+// ═══ 危机检测 ═══
+const CRISIS_KW = /自杀|轻生|不想活|活不下去|去死|死了算了|跳楼|割腕|结束生命|离开这个世界|消失|不想存在|没有意义|撑不下去|放弃生命/;
+
+function isCrisis(q){
+  return CRISIS_KW.test(q);
+}
+
+function showCrisisResult(q){
+  // 强制给出「大吉」卦象，断语改为安慰
+  const comfortReading = "此刻天机示大吉，非终局，乃转机。人生如卦，阴极必阳，困境之中往往藏着你尚未看见的出路。你愿意问一卦，说明心底仍有一丝牵挂——那就是最重要的光。无论此刻多重，都请先拨打心理援助热线 400-161-9995，或告诉身边一个人你的感受。天色会变，卦象会转，你值得等到那一刻。";
+
+  const el=document.getElementById('page-result');
+  el.innerHTML=
+    '<button class="back-btn" onclick="backMain()">← 返回</button>'
+    +'<div class="result-center" style="border:1px solid #4ade8030;">'
+    +'<div style="font-size:9px;color:var(--dm);margin-bottom:12px;">卦象已感应</div>'
+    +'<div class="big-v" style="color:#4ade80;font-size:44px;">大吉</div>'
+    +'<div style="font-size:10px;color:var(--dm);margin-top:6px;">转机将至</div>'
+    +'</div>'
+    +'<div class="rt">✦ 卦语</div>'
+    +'<div class="ai-box" style="line-height:2;color:var(--tx);">'+comfortReading+'</div>'
+    +'<div style="margin-top:4px;padding:14px 16px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.25);border-radius:10px;">'
+    +'<div style="font-size:10px;color:#4ade80;letter-spacing:2px;margin-bottom:8px;">如需倾诉或帮助</div>'
+    +'<div style="font-size:13px;color:var(--tx);line-height:2;">'
+    +'📞 北京心理危机研究与干预中心：<b>010-82951332</b><br>'
+    +'📞 全国心理援助热线：<b>400-161-9995</b><br>'
+    +'📞 生命热线：<b>400-821-1215</b>'
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--mt);margin-top:8px;">24小时均可拨打，免费，保密</div>'
+    +'</div>';
+
+  document.getElementById('page-main').style.display='none';
+  el.style.display='block';
+  window.scrollTo(0,0);
+}
+
+async function doBugua(){
+  const q=document.getElementById('q-in').value.trim();
+  if(!q)return;
+
+  // 危机检测：优先于一切逻辑
+  if(isCrisis(q)){
+    showCrisisResult(q);
+    return;
+  }
+
+  // 按钮进入 loading 状态，防止重复点击
+  const castBtn=document.getElementById('cast-btn');
+  castBtn.disabled=true;
+  castBtn.textContent='推演中…';
+  castBtn.style.opacity='0.7';
+
+  // ── 起卦时间（精确到秒）──
+  const tzV=parseInt(document.getElementById('tz-in').value)||8;
+  const now=new Date(), lt=new Date(now.getTime()+(tzV+now.getTimezoneOffset()/60)*3600000);
+  const lY=lt.getFullYear(),lM=lt.getMonth()+1,lD=lt.getDate();
+  const lH=lt.getHours(),lMin=lt.getMinutes(),lSec=lt.getSeconds();
+  const at={y:lY,m:lM,d:lD,h:lH,min:lMin,sec:lSec,sc:DZ[getSC(lH)]};
+
+  // ── 字符熵（用户问题的Unicode编码总和）──
+  let charEntropy=0;
+  for(let i=0;i<q.length;i++) charEntropy += q.charCodeAt(i);
+  charEntropy = charEntropy % 1000; // 归一化防溢出
+
+  // ── 瞬时随机数（外应，模拟摇卦灵感，1-100）──
+  const rand = Math.floor(Math.random()*100)+1;
+
+  // ── 个人信息（选填）──
+  let extra=null;
+  const birthYr=extraOn?parseInt(document.getElementById('ex-year').value)||0:0;
+  if(birthYr){
+    const sxDZ = DZ[((birthYr-4)%12+12)%12];
+    const sxObj = SX_LIST.find(s=>s.dz===sxDZ)||{name:"未知",dz:sxDZ,em:""};
+    const isMinMing = DZ[((birthYr-4)%12+12)%12] === DZ[((lY-4)%12+12)%12];
+    extra={
+      birthYear:birthYr,
+      shengxiao:sxDZ,
+      shengxiaoName:sxObj.name,
+      shengxiaoEm:sxObj.em,
+      isMinMing,
+      nowYear:lY,
+    };
+  }
+
+  // ── 先用关键词兜底起卦，保证即时响应 ──
+  let ewx = fallbackEWX(q);
+
+  // ── 核心起卦（三才合一，不依赖 Gemini）──
+  const lr = calcLR(lM, lD, lH, lMin, lSec, charEntropy, rand);
+  const mh = calcMH(lM, lD, lH, lMin, lSec, charEntropy, rand);
+  const jd = judgeAll(lr, mh, ewx, extra);
+
+  // ── 事发时间 ──
+  let evInfo=null;
+  if(etOn){
+    const ey=parseInt(document.getElementById('ev-y').value);
+    const emo=parseInt(document.getElementById('ev-mo').value);
+    const ed=parseInt(document.getElementById('ev-d').value);
+    const eh=parseInt(document.getElementById('ev-h').value)||0;
+    const em=parseInt(document.getElementById('ev-m').value)||0;
+    if(ey&&emo&&ed){
+      evInfo={y:ey,mo:emo,d:ed,h:eh,m:em,
+        gong:evGongFn(emo,ed,eh),
+        scName:DZ[getSC(eh)],
+        dateStr:ey+"年"+emo+"月"+ed+"日"+p2(eh)+":"+p2(em)};
+    }
+  }
+
+  // ── 瞬时磁场信息（显示用）──
+  const fieldInfo = { charEntropy, rand, total: charEntropy+rand+lMin+lSec };
+
+  try{
+    showResult({lr,mh,jd,at,q,ewx,evInfo,extra,fieldInfo});
+    const reading=genReading({q,evInfo,lr,mh,jd,at,extra});
+    document.getElementById('ai-box').textContent=reading;
+  }catch(err){
+    console.error('showResult error:',err);
+    // showResult 出错时给用户友好提示
+    document.getElementById('page-main').style.display='block';
+    document.getElementById('page-result').style.display='none';
+    alert('卦象推演出现异常，请重试。');
+  }finally{
+    // 无论成功失败，按钮一定恢复
+    castBtn.disabled=false;
+    castBtn.textContent='✦ 卜　卦 ✦';
+    castBtn.style.opacity='1';
+  }
+
+  // ── Gemini 精化五行标签（异步，不阻塞，结果页已出来后静默更新）──
+  try{
+    const ewxAI = await analyzeEventWX(q);
+    if(ewxAI){
+      // 更新五行标签（如果结果页还开着）
+      const area=document.getElementById('ewx-area');
+      if(area&&area.offsetParent!==null){
+        const col=WXC[ewxAI.wx];
+        area.innerHTML='<div class="ewx-tag" style="background:'+col+'12;border-color:'+col+'38;">'
+          +'<span style="font-size:18px;flex-shrink:0;">'+WXN[ewxAI.wx]+'</span>'
+          +'<div><div style="font-size:12px;font-weight:700;color:'+col+';">'+ewxAI.label+'</div>'
+          +'<div style="font-size:10px;color:var(--mt);">'+ewxAI.desc+(ewxAI.reason?' · '+ewxAI.reason:'')+'</div></div>'
+          +'</div>';
+      }
+      // 同步更新结果页的五行标签
+      const ewxLine=document.getElementById('result-ewx-line');
+      if(ewxLine) ewxLine.textContent=WXN[ewxAI.wx]+' '+ewxAI.label+'事件 · '+ewxAI.desc;
+    }
+  }catch(e){}
+}
+
+function showResult(r){
+  const{lr,mh,jd,at,q,ewx,evInfo,extra,fieldInfo}=r;
+  const lu=LR[lr[2]];
+  const eli=evInfo?LR[evInfo.gong]:null;
+  let h='<button class="back-btn" onclick="backMain()">← 重新卜卦</button>';
+
+  // 问题卡片
+  // 个人信息标签
+  let extraTags='';
+  if(extra&&extra.birthYear){
+    extraTags+='<span style="font-size:10px;color:var(--g);margin-right:8px;">'+extra.shengxiaoEm+' 属'+extra.shengxiaoName+'</span>';
+    extraTags+='<span style="font-size:10px;color:var(--g);">'+extra.birthYear+'年生</span>';
+    if(extra.isMinMing) extraTags+=' <span style="font-size:10px;color:#fb923c;">⚠ 本命年</span>';
+  }
+  // 瞬时磁场信息
+  const fieldTags='<span style="font-size:9px;color:var(--dm);">⟁ 字符熵'+fieldInfo.charEntropy+' · 外应数'+fieldInfo.rand+' · 磁场值'+fieldInfo.total+'</span>';
+  h+='<div class="q-card">'
+    +'<div style="font-size:9px;color:var(--g);letter-spacing:2px;margin-bottom:4px;">所问之事</div>'
+    +'<div style="font-size:13px;line-height:1.7;">「'+q+'」</div>'
+    +(ewx?'<div style="font-size:11px;margin-top:5px;color:'+WXC[ewx.wx]+';">'+WXN[ewx.wx]+' '+ewx.label+'事件 · '+ewx.desc+'</div>':'')
+    +(extraTags?'<div style="margin-top:5px;padding-top:5px;border-top:1px solid var(--gbd);">'+extraTags+'</div>':'')
+    +'<div style="margin-top:5px;">'+fieldTags+'</div>'
+    +'</div>';
+
+  // 综合吉凶
+  h+='<div class="result-center" style="border:1px solid '+jd.overall.c+'28;">'
+    +'<div style="font-size:9px;color:var(--dm);margin-bottom:3px;">起卦：'+at.y+'年'+at.m+'月'+at.d+'日 '+at.sc+'时</div>'
+    +(evInfo?'<div style="font-size:9px;color:var(--dm);margin-bottom:10px;">事发：'+evInfo.dateStr+' '+evInfo.scName+'时</div>':'<div style="margin-bottom:10px;"></div>')
+    +'<div class="big-v" style="color:'+jd.overall.c+';">'+jd.overall.t+'</div>'
+    +'<div style="font-size:10px;color:var(--dm);margin-top:6px;">综合评分 '+(jd.score>0?"+":"")+jd.score+'</div>'
+    +'</div>';
+
+  // AI 断语
+  h+='<div class="rt">✦ 卜卦师断语</div><div class="ai-box" id="ai-box"></div>';
+
+  // 五行生克分析
+  if(ewx&&jd.ewxResult){
+    h+='<div class="rt">五行推演</div>';
+    h+='<div class="wxrel-card">'
+      +'<div style="font-size:10px;color:var(--g);margin-bottom:8px;">事件五行 × 卦气生克</div>'
+      +'<div class="wxrel-row">'
+      +'<div class="wxrel-em"><big>'+WXN[mh.upper.wx]+'</big>上卦'+mh.upper.wx+'</div>'
+      +'<div style="flex:1;font-size:11px;color:'+jd.ewxResult.color+';text-align:center;line-height:1.7;padding:0 4px;">'+jd.ewxResult.desc+'</div>'
+      +'<div class="wxrel-em"><big>'+WXN[ewx.wx]+'</big>事件'+ewx.wx+'</div>'
+      +'</div></div>';
+  }
+
+  // 推断依据
+  h+='<div class="rt">推断依据</div><div class="reasons">';
+  jd.reasons.forEach(rr=>{h+='<div class="r-row"><span class="r-dot">·</span><span>'+rr+'</span></div>';});
+  h+='</div>';
+
+  // 两宫合参（只有填了事发时间才显示）
+  if(evInfo&&eli){
+    h+='<div class="rt">两宫合参</div>';
+    h+='<div class="cmp-grid">'
+      +'<div class="cmp-cell" style="border:1px solid '+lu.color+'25;">'
+      +'<div class="gong-lb">起卦时宫</div>'
+      +'<div class="gong-nm" style="color:'+lu.color+';">'+lr[2]+'</div>'
+      +'<div style="font-size:10px;color:'+lu.color+';">'+lu.luck+'</div>'
+      +'</div>'
+      +'<div class="cmp-cell" style="border:1px solid '+eli.color+'25;">'
+      +'<div class="gong-lb">事发'+evInfo.scName+'时</div>'
+      +'<div class="gong-nm" style="color:'+eli.color+';">'+evInfo.gong+'</div>'
+      +'<div style="font-size:10px;color:'+eli.color+';">'+eli.luck+'</div>'
+      +'</div></div>';
+    const cmp=lr[2]===evInfo.gong
+      ?'起卦与事发同宫「'+lr[2]+'」，吉凶更为确定。'
+      :'起卦「'+lr[2]+'」'+lu.luck+'，事发「'+evInfo.gong+'」'+eli.luck+'。'
+        +(lu.luck!=='凶'&&eli.luck!=='凶'?'两时皆吉，事成可期。'
+        :lu.luck==='凶'&&eli.luck==='凶'?'两时皆凶，此事不宜强行。'
+        :'一吉一凶，结果有变数，审时度势。');
+    h+='<div class="hint-box"><span style="color:var(--g);">合参：</span>'+cmp+'</div>';
+  }
+
+  // 小六壬
+  h+='<div class="rt">小六壬 · 三宫推演</div><div class="gong-grid">';
+  [["月宫",lr[0]],["日宫",lr[1]],["时宫",lr[2]]].forEach(([lb,g])=>{
+    const i=LR[g];
+    h+='<div class="gong-cell" style="border:1px solid '+i.color+'25;">'
+      +'<div class="gong-lb">'+lb+'</div><div class="gong-nm" style="color:'+i.color+';">'+g+'</div>'
+      +'<div class="gong-sh">'+i.short+'</div></div>';
+  });
+  h+='</div><div class="gold-l">'+lu.detail+'</div>';
+
+  // 梅花
+  h+='<div class="rt">梅花易数 · 卦象</div>'
+    +'<div class="mh-wrap">'
+    +'<div class="mh-row">'
+    +'<div class="mh-cell"><div style="font-size:9px;color:var(--dm);margin-bottom:3px;">上卦</div><div class="mh-box">'+mh.upper.n+'</div><div style="font-size:9px;color:var(--mt);">'+mh.upper.nat+'·'+mh.upper.wx+'</div></div>'
+    +'<div style="text-align:center;color:var(--dm);"><div style="font-size:9px;margin-bottom:2px;">第'+mh.change+'爻动</div><div style="font-size:19px;color:var(--g);">⊕</div></div>'
+    +'<div class="mh-cell"><div style="font-size:9px;color:var(--dm);margin-bottom:3px;">下卦</div><div class="mh-box">'+mh.lower.n+'</div><div style="font-size:9px;color:var(--mt);">'+mh.lower.nat+'·'+mh.lower.wx+'</div></div>'
+    +'</div>'
+    +'<div style="text-align:center;font-size:17px;font-weight:700;letter-spacing:3px;">'+mh.guaName+'</div>'
+    +'</div>'
+    +'<div class="gold-l" style="margin-bottom:20px;">'+mh.guaMeaning+'</div>';
+
+  const el=document.getElementById('page-result');
+  el.innerHTML=h;
+  document.getElementById('page-main').style.display='none';
+  el.style.display='block';
+  window.scrollTo(0,0);
+}
+
+function backMain(){
+  document.getElementById('page-result').style.display='none';
+  document.getElementById('page-main').style.display='block';
+  window.scrollTo(0,0);
+}
+
+// 星空
+(function(){const r=document.getElementById('star-root');for(let i=0;i<50;i++){const d=document.createElement('div');d.className='star';d.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+(Math.random()*1.2+0.4)+'px;height:'+(Math.random()*1.2+0.4)+'px;opacity:0.08;animation-duration:'+(2.5+Math.random()*5)+'s;animation-delay:'+(Math.random()*4)+'s;';r.appendChild(d);}})();
+
+// 时钟
+(function tick(){
+  const tzV=parseInt(document.getElementById('tz-in').value)||8;
+  const now=new Date(),lt=new Date(now.getTime()+(tzV+now.getTimezoneOffset()/60)*3600000);
+  const y=lt.getFullYear(),m=lt.getMonth()+1,d=lt.getDate(),h=lt.getHours(),mi=lt.getMinutes(),s=lt.getSeconds();
+  document.getElementById('clk-date').textContent=y+'年'+p2(m)+'月'+p2(d)+'日';
+  document.getElementById('clk-time').textContent=p2(h)+':'+p2(mi)+':'+p2(s);
+  document.getElementById('clk-sub').textContent='UTC+'+tzV+' · '+DZ[getSC(h)]+'时';
+  setTimeout(tick,1000);
+})();
+
+updEvSC();
+</script>
+</body>
+</html>
